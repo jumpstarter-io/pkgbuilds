@@ -1,0 +1,93 @@
+# $Id: e3631c7307ff4d142b970bae183727a38b513495 $
+# Maintainer: Ido Rosen <ido@kernel.org>
+# Contributor: Evan Teitelman <teitelmanevan@gmail.com>
+# Contributor: Eric Renfro <erenfro@gmail.com>
+# Contributor: Alexander Rødseth <rodseth@gmail.com>
+# Contributor: Marti Raudsepp <marti@juffo.org>
+# Contributor: Sandman <the0sandman@hotmail.com>
+# Contributor: raw <spam@rw23.de>
+# Contributor: Dave Simons <miouhpi@gmail.com>
+#
+# NOTE: To request changes to this package, please submit a pull request
+#       to the GitHub repository at https://github.com/ido/packages-archlinux
+#       Otherwise, open a GitHub issue.  Thank you! -Ido
+#
+
+pkgname=ceph
+pkgver=0.72.2
+pkgrel=1
+repobranch=emperor-default-python
+pkgdesc='Distributed, fault-tolerant file system delivering object, block, and file storage in one unified system.'
+arch=('x86_64' 'i686')
+url='http://ceph.newdream.net/'
+license=('GPL')
+depends=('libedit' 'libsigc++' 'gtkmm' 'btrfs-progs' 'crypto++'
+         'gperftools>=1.8.3-2' 'python2' 'fuse' 'keyutils'
+         'libatomic_ops' 'curl' 'libaio' 'fcgi' 'expat' 'boost'
+         'leveldb')
+makedepends=('boost' 'boost-libs')
+install=ceph.install
+options=('!libtool' 'emptydirs')
+source=("git://github.com/jumpstarter-io/ceph.git#branch=emperor-default-python" 
+        "ceph-osd@.service"
+        "ceph-mon@.service"
+        "ceph-mds@.service"
+	"ceph-create-keys@.service"
+        "ceph.install")
+sha256sums=('SKIP'
+            '3c8bd95033a0727e881fc92ad00f48902d863236f62115397c71f831dcb551c4'
+            'a50811ce62fd6cdcc17d8f1e4d9700c1889ab4bfc5e9a22155bd725a27715e3c'
+            'b8239a04cc42e3e4ced2e141df6804e61e875131a5c95d6bcbfc3b44f388d44b'
+            'b905b08cb45391a95dbb1fd06d1233a761d069ce4d20643e339d46915c1b0800'
+	    'c1669b2bedc07a313b8bd29735296791abc0fd94eb353c9683b6015f2cc2c93c')
+
+build() {
+  echo "$srcdir/$pkgname"
+  cd "$srcdir/ceph"
+
+  ./autogen.sh # if pulling from git
+  LIBS="-lpthread -lboost_system" ./configure PYTHON=/usr/bin/python2 \
+    --prefix=/usr \
+    --exec_prefix=/usr \
+    --sbindir=/usr/sbin \
+    --sysconfdir=/etc \
+    --with-radosgw
+
+  make -j10
+}
+
+package() {
+  cd "$srcdir/$pkgname"
+
+  make DESTDIR="$pkgdir" install -j10
+
+  install -dm755 "$pkgdir/var/run/ceph" "$pkgdir/var/log/ceph" \
+    "$pkgdir/etc/rc.d" "$pkgdir/etc/ceph"
+
+  # Systemd.
+  install -dm755 "$pkgdir/usr/lib/systemd/system"
+  install -Dm644 "$srcdir/ceph-osd@.service" "$pkgdir/usr/lib/systemd/system/ceph-osd@.service"
+  install -Dm644 "$srcdir/ceph-mon@.service" "$pkgdir/usr/lib/systemd/system/ceph-mon@.service"
+  install -Dm644 "$srcdir/ceph-mds@.service" "$pkgdir/usr/lib/systemd/system/ceph-mds@.service"
+  install -Dm644 "$srcdir/ceph-create-keys@.service" "$pkgdir/usr/lib/systemd/system/ceph-create-keys@.service"
+  install -Dm755 "src/init-ceph" "$pkgdir/etc/rc.d/ceph"
+
+  # Fix bin directory.
+  mv "$pkgdir/usr/sbin" "$pkgdir/usr/bin"
+  mv "$pkgdir/usr/bin/sbin/ceph-create-keys" "$pkgdir/usr/bin"
+  mv "$pkgdir/usr/bin/sbin/ceph-disk-prepare" "$pkgdir/usr/bin"
+  mv "$pkgdir/usr/bin/sbin/ceph-disk-udev" "$pkgdir/usr/bin"
+  mv "$pkgdir/usr/bin/sbin/ceph-disk-activate" "$pkgdir/usr/bin"
+  mv "$pkgdir/usr/bin/sbin/ceph-disk" "$pkgdir/usr/bin"
+
+  # Sample config.
+  install -Dm644 "$pkgdir/usr/share/doc/ceph/sample.ceph.conf" \
+    "$pkgdir/etc/ceph/ceph.conf.sample"
+
+  # License.
+  install -Dm644 COPYING \
+    "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+
+  # Clean up.
+  rmdir "$pkgdir/var/run/ceph"
+}

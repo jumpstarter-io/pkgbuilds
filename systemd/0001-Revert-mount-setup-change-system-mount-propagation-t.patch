@@ -1,0 +1,45 @@
+From 7618153c62267d5d5332080ef555f79c030a2bdc Mon Sep 17 00:00:00 2001
+From: Hannes Landeholm <hannes@jumpstarter.io>
+Date: Tue, 10 Dec 2013 20:03:44 +0100
+Subject: [PATCH] Revert "mount-setup: change system mount propagation to
+ shared by default"
+
+This reverts commit b3ac5f8cb98757416d8660023d6564a7c411f0a0.
+
+Conflicts:
+	TODO
+	src/core/mount-setup.c
+
+We want mounts to be private, complying with the standard kernel behavior.
+Shared mounts interfere with pivot_root and makes namespace leak. Making
+all mounts shared by default was a massive mistake that breaks userspace.
+
+We lost about 20 hours of combined work time thanks to this "feature".
+---
+ src/core/mount-setup.c | 10 ----------
+ 1 file changed, 10 deletions(-)
+
+diff --git a/src/core/mount-setup.c b/src/core/mount-setup.c
+index 4359f59..2bff278 100644
+--- a/src/core/mount-setup.c
++++ b/src/core/mount-setup.c
+@@ -384,16 +384,6 @@ int mount_setup(bool loaded_policy) {
+          * udevd. */
+         dev_setup(NULL);
+ 
+-        /* Mark the root directory as shared in regards to mount
+-         * propagation. The kernel defaults to "private", but we think
+-         * it makes more sense to have a default of "shared" so that
+-         * nspawn and the container tools work out of the box. If
+-         * specific setups need other settings they can reset the
+-         * propagation mode to private if needed. */
+-        if (detect_container(NULL) <= 0)
+-                if (mount(NULL, "/", NULL, MS_REC|MS_SHARED, NULL) < 0)
+-                        log_warning("Failed to set up the root directory for shared mount propagation: %m");
+-
+         /* Create a few directories we always want around, Note that
+          * sd_booted() checks for /run/systemd/system, so this mkdir
+          * really needs to stay for good, otherwise software that
+-- 
+1.8.5.2
+

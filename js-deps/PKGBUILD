@@ -1,0 +1,39 @@
+#Maintainer: Matt Monaco <net 0x01b dgbaley27>
+
+pkgname=js-dep
+pkgver=1
+pkgrel=1
+arch=(any)
+pkgdesc="This is a metapackage that install all Jumpstarter dependencies in a production cluster"
+url=http://jumpstarter.io
+license=(NONE)
+#source=(git://github.com/jumpstarter-io/ceph-deploy.git#branch=$repobranch)
+#sha256sums=(SKIP)
+depends=(
+	python2
+	python2-setuptools
+	python
+	ipvsadm
+	dnsutils
+	ec2-keyring
+	ec2-metadata
+	ec2-pacman-mirrors
+	emacs-nox
+	htop
+	linux-js
+	ceph-deploy
+	ceph
+	nginx
+	nodejs
+	postgresql
+	tmux
+	fish
+)
+
+#makedepends=(git python2-setuptools)
+
+#package() {
+#	cd "$srcdir/$pkgname"
+#	python2 setup.py install --root="$pkgdir/" --optimize=1
+#	install -m644 -D LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+#}
