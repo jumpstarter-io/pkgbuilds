@@ -2,9 +2,9 @@
 
 pkgname=js-dep
 pkgver=1
-pkgrel=1
+pkgrel=4
 arch=(any)
-pkgdesc="This is a metapackage that install all Jumpstarter dependencies in a production cluster"
+pkgdesc="This is a meta package that install all Jumpstarter dependencies in a production cluster"
 url=http://jumpstarter.io
 license=(NONE)
 #source=(git://github.com/jumpstarter-io/ceph-deploy.git#branch=$repobranch)
@@ -15,12 +15,11 @@ depends=(
 	python
 	ipvsadm
 	dnsutils
-	ec2-keyring
-	ec2-metadata
-	ec2-pacman-mirrors
+	python2-aws-cli
 	emacs-nox
 	htop
 	linux-js
+	linux-js-kdump
 	ceph-deploy
 	ceph
 	nginx
@@ -28,6 +27,9 @@ depends=(
 	postgresql
 	tmux
 	fish
+	traceroute
+	python2-pyudev
+	python-pyudev
 )
 
 #makedepends=(git python2-setuptools)
